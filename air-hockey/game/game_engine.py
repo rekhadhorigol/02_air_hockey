@@ -8,6 +8,7 @@ a goal is incomplete. That's what Tasks 2-4 fix/add.
 """
 
 import random
+import math
 
 from game.puck import Puck
 from game.paddle import Paddle
@@ -19,12 +20,17 @@ PLAYER_SPEED = 6
 PUCK_RADIUS = 12
 PADDLE_RADIUS = 28
 INITIAL_PUCK_SPEED = 4.5
+MATCH_DURATION = 30.0
 
 
 class GameEngine:
     def __init__(self):
         self.puck = Puck(WIDTH / 2, HEIGHT / 2, PUCK_RADIUS)
         self._launch_puck()
+
+        self.match_start_ticks = pygame.time.get_ticks()
+        self.remaining_time = 30.0
+        self.match_over = False
 
         self.player = Paddle(
             x=WIDTH * 0.15, y=HEIGHT / 2, radius=PADDLE_RADIUS,
@@ -61,6 +67,19 @@ class GameEngine:
         self.player.move_by(dx, dy)
 
     def update(self):
+        if self.match_over:
+           return
+
+        elapsed = (pygame.time.get_ticks() - self.match_start_ticks) / 1000.0
+        self.remaining_time = max(0.0, MATCH_DURATION - elapsed)
+
+        if self.remaining_time <= 0:
+           self.remaining_time = 0.0
+           self.match_over = True
+           self.puck.vx = 0
+           self.puck.vy = 0
+           return
+        
         self.ai.update(self.computer, self.puck)
 
         self.puck.move()
@@ -115,3 +134,30 @@ class GameEngine:
             f"Computer: {self.computer_score}",
             (WIDTH - 185, 28)
         )
+
+        time_left = math.ceil(self.remaining_time)
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Time: {time_left}s",
+            (WIDTH // 2 - 50, 28)
+        )
+        if self.match_over:
+            renderer.draw_banner(
+                surface,
+                font,
+                f"{self._result_text()}  "
+                f"{self.player_score}-{self.computer_score}"
+            )
+
+    def _result_text(self):
+        if self.player_score > self.computer_score:
+            return "You Win!"
+
+        if self.computer_score > self.player_score:
+            return "Computer Wins!"
+
+        return "Draw"
+
+
