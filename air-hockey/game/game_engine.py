@@ -37,6 +37,8 @@ class GameEngine:
             min_y=MARGIN + PADDLE_RADIUS, max_y=HEIGHT - MARGIN - PADDLE_RADIUS,
         )
         self.ai = ComputerAI()
+        self.player_score = 0
+        self.computer_score = 0
 
     def _launch_puck(self):
         angle_choices = [0.3, 0.6, -0.3, -0.6]
@@ -71,17 +73,24 @@ class GameEngine:
 
     def _handle_goals(self):
         if self.puck.x - self.puck.radius < MARGIN:
-            if GOAL_TOP < self.puck.y < GOAL_BOTTOM:
+            if GOAL_TOP + self.puck.radius <= self.puck.y <= GOAL_BOTTOM - self.puck.radius:
+                self.computer_score += 1
                 self._reset_puck()
+                return True
             else:
                 self.puck.x = MARGIN + self.puck.radius
                 self.puck.vx = -self.puck.vx
+
         elif self.puck.x + self.puck.radius > WIDTH - MARGIN:
-            if GOAL_TOP < self.puck.y < GOAL_BOTTOM:
-                self._reset_puck()
+            if GOAL_TOP + self.puck.radius <= self.puck.y <= GOAL_BOTTOM - self.puck.radius:
+               self.player_score += 1
+               self._reset_puck()
+               return True
             else:
-                self.puck.x = WIDTH - MARGIN - self.puck.radius
-                self.puck.vx = -self.puck.vx
+               self.puck.x = WIDTH - MARGIN - self.puck.radius
+               self.puck.vx = -self.puck.vx
+
+        return False
 
     def _reset_puck(self):
         self.puck.x, self.puck.y = WIDTH / 2, HEIGHT / 2
@@ -94,3 +103,15 @@ class GameEngine:
         renderer.draw_paddle(surface, self.player, renderer.COLOR_PLAYER)
         renderer.draw_paddle(surface, self.computer, renderer.COLOR_COMPUTER)
         renderer.draw_puck(surface, self.puck)
+
+        renderer.draw_text(
+            surface, font,
+            f"You: {self.player_score}",
+            (35, 28)
+        )
+
+        renderer.draw_text(
+            surface, font,
+            f"Computer: {self.computer_score}",
+            (WIDTH - 185, 28)
+        )
