@@ -21,6 +21,7 @@ PUCK_RADIUS = 12
 PADDLE_RADIUS = 28
 INITIAL_PUCK_SPEED = 4.5
 MATCH_DURATION = 30.0
+PUCK_SUBSTEPS = 4
 
 
 class GameEngine:
@@ -82,13 +83,15 @@ class GameEngine:
         
         self.ai.update(self.computer, self.puck)
 
-        self.puck.move()
-        self.puck.bounce_off_walls(HEIGHT, MARGIN)
+        for _ in range(PUCK_SUBSTEPS):
+            self.puck.move_by_scale(1 / PUCK_SUBSTEPS)
+            self.puck.bounce_off_walls(HEIGHT, MARGIN)
 
-        handle_paddle_collision(self.puck, self.player)
-        handle_paddle_collision(self.puck, self.computer)
+            handle_paddle_collision(self.puck, self.player)
+            handle_paddle_collision(self.puck, self.computer)
 
-        self._handle_goals()
+            if self._handle_goals():
+                break
 
     def _handle_goals(self):
         if self.puck.x - self.puck.radius < MARGIN:
@@ -112,9 +115,9 @@ class GameEngine:
         return False
 
     def _reset_puck(self):
-        self.puck.x, self.puck.y = WIDTH / 2, HEIGHT / 2
-        self.puck.vx = 0
-        self.puck.vy = 0
+        self.puck.x = WIDTH / 2
+        self.puck.y = HEIGHT / 2
+        self._launch_puck()
 
     def draw(self, surface, font):
         from game import renderer
