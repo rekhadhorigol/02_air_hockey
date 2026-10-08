@@ -15,12 +15,15 @@ class Puck:
         self.x += self.vx
         self.y += self.vy
 
+    def move_by_scale(self, scale):
+        self.x += self.vx * scale
+        self.y += self.vy * scale
+
     def bounce_off_walls(self, height, margin):
-        """Bounce off the top and bottom walls only - left/right are handled
-        separately by the game engine, since they contain the goals."""
+        """Bounce off the top and bottom walls only."""
         if self.y - self.radius < margin:
             self.y = margin + self.radius
-            self.vy = -self.vy
+            self.vy = abs(self.vy)
         elif self.y + self.radius > height - margin:
             self.y = height - margin - self.radius
-            self.vy = -self.vy
+            self.vy = -abs(self.vy)
